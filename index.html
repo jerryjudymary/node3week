@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HH99 JERRY'S COMMUNITY</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css">
+    <!--bulma import-->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400&display=swap" rel="stylesheet">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', () => {
+        // Functions to open and close a modal
+        function openModal($el) {
+          $el.classList.add('is-active');
+        }
+      
+        function closeModal($el) {
+          $el.classList.remove('is-active');
+        }
+      
+        function closeAllModals() {
+          (document.querySelectorAll('.modal') || []).forEach(($modal) => {
+            closeModal($modal);
+          });
+        }
+      
+        // Add a click event on buttons to open a specific modal
+        (document.querySelectorAll('.js-modal-trigger') || []).forEach(($trigger) => {
+          const modal = $trigger.dataset.target;
+          const $target = document.getElementById(modal);
+      
+          $trigger.addEventListener('click', () => {
+            openModal($target);
+          });
+        });
+      
+        // Add a click event on various child elements to close the parent modal
+        (document.querySelectorAll('.modal-background, .modal-close, .modal-card-head .delete, .modal-card-foot .button') || []).forEach(($close) => {
+          const $target = $close.closest('.modal');
+      
+          $close.addEventListener('click', () => {
+            closeModal($target);
+          });
+        });
+      
+        // Add a keyboard event to close all modals
+        document.addEventListener('keydown', (event) => {
+          const e = event || window.event;
+      
+          if (e.keyCode === 27) { // Escape key
+            closeAllModals();
+          }
+        });
+      });</script>
+    <script>
+        $(document).ready(function () {
+            show_comment()
+
+            logif()
+        });
+
+        function save_post() {
+            let postbody = $('#postbody').val()
+            let posttitle = $('#posttitle').val()
+            if (posttitle == false) {
+                alert('제목을 입력해주세요!')
+            } else if (postbody == false) {
+                alert('내용을 입력해주세요!')
+            } else {
+            $.ajax({
+                type: "POST",
+                url: "/posts",
+                data: {
+                postbody: postbody,
+                posttitle: posttitle,
+                postId: Date.now(),
+                },
+                headers: {
+                authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+                success: function (response) {
+                    alert(response["msg"])
+                    window.location.reload()
+                },
+                error: function (xhr, status, error) {
+                if (status == 401) {
+                    alert("로그인이 필요합니다.");
+                } else {
+                    localStorage.clear();
+                    alert("알 수 없는 문제가 발생했습니다. 관리자에게 문의하세요.");
+                }
+                window.location.href = "/";
+                },
+            })};
+        }
+
+
+        function show_comment() {
+            $.ajax({
+                type: "GET",
+                url: "/posts",
+                data: {},
+                success: function (response) {
+                    let rows = (response['posts'])
+                        for (let i = 0; i < rows.length; i++) {
+                            let nickname = rows[i]['nickname']
+                            let posttitle = rows[i]['posttitle']
+                            let createdAt = rows[i]['createdAt'].split('T')[0]
+                            let postId = rows[i]['postId']
+                                let temp_html = `
+                                <tbody>
+                                <tr>
+                                    <th>${createdAt}</th>
+                                    <td>${nickname}</td>
+                                    <td><a href='postdetail.html?postId=${postId}' title="${posttitle}">${posttitle}</a>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            `
+                                    $('#headmaster').prepend(temp_html)
+
+                        }
+                }
+            });
+        }
+
+        function sign_up() {
+        const nickname = $("#inputNickname2").val();
+        const email = $("#inputEmail").val();
+        const password1 = $("#inputPassword1").val();
+        const password2 = $("#inputPassword2").val();
+        const repl = function() { window.location.replace('/'); }
+        $.ajax({
+          type: "POST",
+          url: "/users",
+          data: {
+            nickname: nickname,
+            email: email,
+            password: password1,
+            confirmPassword: password2,
+          },
+          success: function (response) {
+            alert("회원가입을 축하드립니다!");
+            repl();
+          },
+          error: function (err) {
+            alert(err.responseJSON.errorMessage);
+          },
+        });
+      }
+
+        function logif() {
+            if (localStorage.getItem("token")) {
+     
+                $("#loginid").hide();
+
+        } else { $("#logoutbutton").hide(); }
+        }
+
+        function log_in() {
+            if (localStorage.getItem("token")) {
+     
+     alert("이미 로그인이 되어 있습니다.");
+     window.location.replace("/");
+
+ }
+
+      let nickname = $("#inputNickname").val();
+      let password = $("#inputPassword").val();
+      $.ajax({
+        type: "POST",
+        url: "/auth",
+        data: {
+          nickname: nickname,
+          password: password,
+        },
+        success: function (response) {
+          localStorage.setItem("token", response.token);
+          alert('로그인 성공')
+          window.location.replace("/");
+        },
+        error: function (err) {
+          alert(err.responseJSON.errorMessage);
+        },
+      });
+    }
+
+            function signOut() {
+            localStorage.clear();
+            window.location.href = "/";
+            alert('로그아웃 되었습니다.')
+            }
+
+    </script>
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        button { font-family: 'Noto Sans KR', sans-serif; }
+
+        
+
+        .auth {
+            float:right
+        }
+    </style>
+</head>
+<body>
+    <section class="hero is-black">
+        <div class="hero-body">
+          <p class="title">
+            Jerry's Community
+          </p>
+          <p class="subtitle">
+            유승재의 게시판입니다!
+          </p>
+        </div>
+      </section>
+    <div>
+        <nav class="navbar is-dark" role="navigation" aria-label="main navigation">
+            <div id="navbarBasicExample" class="navbar-menu">
+              <div class="navbar-start">
+                <a class="navbar-item">
+                  게시글 목록
+                </a>
+          <!--a 태그 안 p태그에 모달 호출 클래스 넣는 걸로 구현 -->
+                <a class="navbar-item">
+                    <p class="js-modal-trigger" data-target="modal-js-example"> 
+                  게시글 작성하기</p>
+                </a>
+          
+                <div class="navbar-item has-dropdown is-hoverable">
+                  <a class="navbar-link">
+                    More
+                  </a>
+          
+                  <div class="navbar-dropdown">
+                    <a class="navbar-item">
+                    임시로
+                    </a>
+                    <a class="navbar-item">
+                      남겨놓은
+                    </a>
+                    <a class="navbar-item">
+                      버튼입니다..
+                    </a>
+                    <hr class="navbar-divider">
+                    <a class="navbar-item">
+                      안녕하세요!
+                    </a>
+                  </div>
+                </div>
+              </div>
+          
+              <div class="navbar-end">
+                <div class="navbar-item">
+                  <div class="buttons">
+                    <a class="button is-black">
+                      <strong><p class="js-modal-trigger" data-target="modal-js-signup"> 
+                        Sign Up</p></strong>
+                    </a>
+                    <a id = 'loginid'class="button is-light">
+                        <p class="js-modal-trigger" data-target="modal-js-login"> 
+                            Log In</p>
+                    </a>
+                    <a id = 'logoutbutton' class="button is-light" onclick = "signOut()">
+                        Log Out
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </nav>   
+    </div>
+
+    <div id="comment-list"></div>
+
+    <table class="table is-striped" id = 'headmaster'>
+        <thead>
+        <tr>
+            <th>Date</th>
+            <td>Writer</td>
+            <td>Title</td>
+        </tr>
+        </thead>
+    </table>
+
+      <div id="modal-js-example" class="modal">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+          <header class="modal-card-head">
+            <p class="modal-card-title">게시글 작성</p>
+            <button class="delete" aria-label="close"></button>
+          </header>
+          <section class="modal-card-body">
+            <input id = 'posttitle' class="input" type="text" placeholder="제목을 입력해주세요!">
+            <div>
+                &nbsp;
+            </div>
+            <textarea id = 'postbody' class="textarea" placeholder="내용을 입력해주세요!" rows="10"></textarea>
+          </section>
+          <footer class="modal-card-foot">
+            <button onclick='save_post()' class="button is-dark">확인</button>
+            <button class="button">취소</button>
+          </footer>
+        </div>
+      </div>
+
+      <div id="modal-js-login" class="modal">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+          <header class="modal-card-head">
+            <p class="modal-card-title">로그인</p>
+            <button class="delete" aria-label="close"></button>
+          </header>
+          <section class="modal-card-body">
+            <input id = 'inputNickname' class="input" type="text" placeholder="닉네임을 입력해주세요">
+            <div>
+                &nbsp;
+            </div>
+            <input id = 'inputPassword' class="input" type="password" placeholder="비밀번호를 입력해주세요">
+            <div>
+                &nbsp;
+            </div>
+          </section>
+          <footer class="modal-card-foot">
+            <button onclick='log_in()' class="button is-dark">확인</button>
+            <button class="button">취소</button>
+          </footer>
+        </div>
+      </div>
+
+      <div id="modal-js-signup" class="modal">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+          <header class="modal-card-head">
+            <p class="modal-card-title">회원가입</p>
+            <button class="delete" aria-label="close"></button>
+          </header>
+          <section class="modal-card-body">
+            <input id = 'inputEmail' class="input" type="email" placeholder="이메일을 입력해주세요!">
+            <div>
+                &nbsp;
+            </div>
+            <input id = 'inputNickname2' class="input" type="text" placeholder="닉네임을 입력해주세요!">
+            <div>
+                &nbsp;
+            </div>
+            <input id = 'inputPassword1' class="input" type="password" placeholder="비밀번호를 입력해주세요!">
+            <div>
+                &nbsp;
+            </div>
+            <input id = 'inputPassword2' class="input" type="password" placeholder="비밀번호를 확인해주세요!">
+            <div>
+                &nbsp;
+            </div>
+            
+          </section>
+          <footer class="modal-card-foot">
+            <button onclick='sign_up()' class="button is-dark">확인</button>
+            <button class="button">취소</button>
+          </footer>
+        </div>
+      </div>
+
+</body>
+</html>
